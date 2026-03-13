@@ -2,11 +2,21 @@
 
 A sleek and simple personal finance tracker that allows users to log income and expenses, monitor their balance in real time, and organize transactions by category using a modern dark interface.
 
+---
+
+## Preview
+
+![Finance Tracker Screenshot](assets/finance-tracker.png)
+
+---
+
 ## Overview
 
 Finance Tracker is a lightweight budgeting tool designed to help users manage their daily finances easily. It provides a clear overview of income, expenses, and net balance while allowing quick transaction entry and filtering.
 
 The goal of this project is to create a clean and minimal finance management tool that is easy to use and visually appealing.
+
+---
 
 ## Features
 
@@ -35,6 +45,8 @@ The goal of this project is to create a clean and minimal finance management too
 - **Modern Dark UI**
   - Clean, elegant interface for better user experience
 
+---
+
 ## Use Cases
 
 This project can be used for:
@@ -44,6 +56,8 @@ This project can be used for:
 - Monitoring monthly income
 - Basic financial planning
 
+---
+
 ## Future Improvements
 
 - Monthly reports and analytics
@@ -52,6 +66,8 @@ This project can be used for:
 - Budget limits and alerts
 - Mobile responsiveness improvements
 - Multi-user authentication
+
+---
 
 ## Getting Started
 
@@ -68,6 +84,8 @@ cd finance-tracker
 ```
 
 3. Open the project in your browser or development environment.
+
+---
 
 ## License
 
