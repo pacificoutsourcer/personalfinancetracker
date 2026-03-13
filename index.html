@@ -1,1 +1,450 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; margin: 0; }
+    .font-display { font-family: 'Playfair Display', serif; }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+    input:focus, select:focus { outline: none; }
+    .toast { animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto" style="background-color: #0f1117;"><!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+   <div class="max-w-2xl mx-auto px-4 py-8"><!-- Header -->
+    <header class="text-center mb-8 fade-in">
+     <h1 id="app-title" class="font-display text-3xl font-bold mb-2" style="color: #e8e0d4;">Finance Tracker</h1>
+     <p class="text-sm opacity-60" style="color: #a09888;">Track your income &amp; expenses</p>
+    </header><!-- Summary Cards -->
+    <section aria-label="Financial summary" class="grid grid-cols-3 gap-3 mb-8 fade-in" style="animation-delay: 0.1s;">
+     <div class="rounded-2xl p-4 text-center" style="background-color: #1a1d27; border: 1px solid rgba(232,224,212,0.08);">
+      <p class="text-xs uppercase tracking-wider mb-1 opacity-50" style="color: #a09888;">Income</p>
+      <p id="total-income" class="text-lg font-bold" style="color: #6ecb8a;">$0.00</p>
+     </div>
+     <div class="rounded-2xl p-4 text-center" style="background-color: #1a1d27; border: 1px solid rgba(232,224,212,0.08);">
+      <p class="text-xs uppercase tracking-wider mb-1 opacity-50" style="color: #a09888;">Expenses</p>
+      <p id="total-expenses" class="text-lg font-bold" style="color: #e87461;">$0.00</p>
+     </div>
+     <div class="rounded-2xl p-4 text-center" style="background-color: #1a1d27; border: 1px solid rgba(232,224,212,0.08);">
+      <p class="text-xs uppercase tracking-wider mb-1 opacity-50" style="color: #a09888;">Balance</p>
+      <p id="total-balance" class="text-lg font-bold" style="color: #e8e0d4;">$0.00</p>
+     </div>
+    </section><!-- Balance Bar -->
+    <div class="mb-8 fade-in" style="animation-delay: 0.15s;">
+     <div class="h-2 rounded-full overflow-hidden" style="background-color: #1a1d27;">
+      <div id="balance-bar" class="h-full rounded-full transition-all duration-700 ease-out" style="width: 50%; background: linear-gradient(90deg, #6ecb8a, #4db86a);"></div>
+     </div>
+    </div><!-- Add Transaction Form -->
+    <section aria-label="Add transaction" class="rounded-2xl p-5 mb-8 fade-in" style="background-color: #1a1d27; border: 1px solid rgba(232,224,212,0.08); animation-delay: 0.2s;">
+     <h2 class="font-display text-lg font-semibold mb-4" style="color: #e8e0d4;">New Transaction</h2>
+     <form id="transaction-form" class="space-y-3">
+      <div class="flex gap-3">
+       <div class="flex-1"><label for="tx-desc" class="block text-xs mb-1 opacity-60" style="color: #a09888;">Description</label> <input type="text" id="tx-desc" required placeholder="Coffee, Salary, etc." class="w-full rounded-xl px-3 py-2.5 text-sm transition-colors" style="background-color: #252830; color: #e8e0d4; border: 1px solid rgba(232,224,212,0.1);" onfocus="this.style.borderColor='#c9a55a'" onblur="this.style.borderColor='rgba(232,224,212,0.1)'">
+       </div>
+       <div class="w-28"><label for="tx-amount" class="block text-xs mb-1 opacity-60" style="color: #a09888;">Amount</label> <input type="number" id="tx-amount" required min="0.01" step="0.01" placeholder="0.00" class="w-full rounded-xl px-3 py-2.5 text-sm transition-colors" style="background-color: #252830; color: #e8e0d4; border: 1px solid rgba(232,224,212,0.1);" onfocus="this.style.borderColor='#c9a55a'" onblur="this.style.borderColor='rgba(232,224,212,0.1)'">
+       </div>
+      </div>
+      <div class="flex gap-3">
+       <div class="flex-1"><label for="tx-type" class="block text-xs mb-1 opacity-60" style="color: #a09888;">Type</label> <select id="tx-type" required class="w-full rounded-xl px-3 py-2.5 text-sm" style="background-color: #252830; color: #e8e0d4; border: 1px solid rgba(232,224,212,0.1);"> <option value="expense">Expense</option> <option value="income">Income</option> </select>
+       </div>
+       <div class="flex-1"><label for="tx-category" class="block text-xs mb-1 opacity-60" style="color: #a09888;">Category</label> <select id="tx-category" required class="w-full rounded-xl px-3 py-2.5 text-sm" style="background-color: #252830; color: #e8e0d4; border: 1px solid rgba(232,224,212,0.1);"> <option value="Food">Food</option> <option value="Transport">Transport</option> <option value="Shopping">Shopping</option> <option value="Bills">Bills</option> <option value="Entertainment">Entertainment</option> <option value="Salary">Salary</option> <option value="Freelance">Freelance</option> <option value="Other">Other</option> </select>
+       </div>
+      </div><button type="submit" id="submit-btn" class="w-full rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2" style="background-color: #c9a55a; color: #0f1117;"> <i data-lucide="plus" style="width:16px;height:16px;"></i> <span>Add Transaction</span> </button>
+     </form>
+    </section><!-- Filter -->
+    <div class="flex items-center gap-2 mb-4 fade-in" style="animation-delay: 0.25s;"><button data-filter="all" class="filter-btn active-filter rounded-full px-4 py-1.5 text-xs font-medium transition-all" style="background-color: #c9a55a; color: #0f1117;">All</button> <button data-filter="income" class="filter-btn rounded-full px-4 py-1.5 text-xs font-medium transition-all" style="background-color: #252830; color: #a09888;">Income</button> <button data-filter="expense" class="filter-btn rounded-full px-4 py-1.5 text-xs font-medium transition-all" style="background-color: #252830; color: #a09888;">Expenses</button>
+    </div><!-- Transaction List -->
+    <main>
+     <div id="transaction-list" class="space-y-2"><!-- Transactions render here -->
+     </div>
+     <div id="empty-state" class="text-center py-12 fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #1a1d27;"><i data-lucide="wallet" style="width:28px;height:28px;color:#c9a55a;"></i>
+      </div>
+      <p class="text-sm font-medium mb-1" style="color: #e8e0d4;">No transactions yet</p>
+      <p class="text-xs opacity-50" style="color: #a09888;">Add your first transaction above</p>
+     </div>
+    </main><!-- Limit Warning -->
+    <div id="limit-warning" class="hidden rounded-xl p-3 mt-4 text-center text-xs font-medium" style="background-color: #e87461; color: #0f1117;">
+     Maximum of 999 transactions reached. Please delete some to add more.
+    </div>
+   </div>
+  </div>
+  <script>
+    // ========== State ==========
+    let allTransactions = [];
+    let currentFilter = 'all';
+    let pendingDeleteId = null;
 
+    const categoryIcons = {
+      'Food': 'utensils', 'Transport': 'car', 'Shopping': 'shopping-bag',
+      'Bills': 'file-text', 'Entertainment': 'music', 'Salary': 'briefcase',
+      'Freelance': 'laptop', 'Other': 'circle'
+    };
+
+    // ========== Default Config ==========
+    const defaultConfig = {
+      app_title: 'Finance Tracker',
+      currency_symbol: '$',
+      background_color: '#0f1117',
+      surface_color: '#1a1d27',
+      text_color: '#e8e0d4',
+      primary_action_color: '#c9a55a',
+      secondary_action_color: '#a09888',
+      font_family: 'DM Sans',
+      font_size: 14
+    };
+
+    // ========== Element SDK ==========
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        const c = { ...defaultConfig, ...config };
+        const app = document.getElementById('app');
+        const title = document.getElementById('app-title');
+        const customFont = c.font_family || defaultConfig.font_family;
+        const baseSize = c.font_size || defaultConfig.font_size;
+        const fontStack = `${customFont}, 'DM Sans', sans-serif`;
+        const displayStack = `'Playfair Display', ${customFont}, serif`;
+
+        // Background
+        app.style.backgroundColor = c.background_color;
+
+        // Title
+        title.textContent = c.app_title || defaultConfig.app_title;
+        title.style.color = c.text_color;
+        title.style.fontFamily = displayStack;
+        title.style.fontSize = `${baseSize * 2.1}px`;
+
+        // Subtitle
+        const subtitle = title.nextElementSibling;
+        if (subtitle) { subtitle.style.color = c.secondary_action_color; subtitle.style.fontSize = `${baseSize * 0.85}px`; }
+
+        // Body font
+        document.body.style.fontFamily = fontStack;
+
+        // Summary cards
+        document.querySelectorAll('[aria-label="Financial summary"] > div').forEach(card => {
+          card.style.backgroundColor = c.surface_color;
+          card.querySelector('p:first-child').style.color = c.secondary_action_color;
+          card.querySelector('p:first-child').style.fontSize = `${baseSize * 0.75}px`;
+        });
+        document.getElementById('total-balance').style.color = c.text_color;
+
+        // Balance bar track
+        document.getElementById('balance-bar').parentElement.style.backgroundColor = c.surface_color;
+
+        // Form section
+        const formSection = document.querySelector('[aria-label="Add transaction"]');
+        formSection.style.backgroundColor = c.surface_color;
+        formSection.querySelector('h2').style.color = c.text_color;
+        formSection.querySelector('h2').style.fontFamily = displayStack;
+        formSection.querySelector('h2').style.fontSize = `${baseSize * 1.3}px`;
+
+        // Labels
+        formSection.querySelectorAll('label').forEach(l => {
+          l.style.color = c.secondary_action_color;
+          l.style.fontSize = `${baseSize * 0.78}px`;
+        });
+
+        // Inputs
+        formSection.querySelectorAll('input, select').forEach(el => {
+          el.style.color = c.text_color;
+          el.style.fontSize = `${baseSize}px`;
+        });
+
+        // Submit button
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.style.backgroundColor = c.primary_action_color;
+        submitBtn.style.color = c.background_color;
+        submitBtn.style.fontSize = `${baseSize}px`;
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          const isActive = btn.classList.contains('active-filter');
+          btn.style.backgroundColor = isActive ? c.primary_action_color : c.surface_color;
+          btn.style.color = isActive ? c.background_color : c.secondary_action_color;
+          btn.style.fontSize = `${baseSize * 0.78}px`;
+        });
+
+        // Empty state
+        const emptyIcon = document.querySelector('#empty-state .rounded-full');
+        if (emptyIcon) {
+          emptyIcon.style.backgroundColor = c.surface_color;
+          const ico = emptyIcon.querySelector('i, svg');
+          if (ico) ico.style.color = c.primary_action_color;
+        }
+        const emptyTexts = document.querySelectorAll('#empty-state p');
+        if (emptyTexts[0]) { emptyTexts[0].style.color = c.text_color; emptyTexts[0].style.fontSize = `${baseSize}px`; }
+        if (emptyTexts[1]) { emptyTexts[1].style.color = c.secondary_action_color; emptyTexts[1].style.fontSize = `${baseSize * 0.78}px`; }
+
+        // Re-render transactions with new colors
+        renderTransactions();
+      },
+      mapToCapabilities: (config) => {
+        const c = { ...defaultConfig, ...config };
+        const makeColor = (key) => ({
+          get: () => c[key] || defaultConfig[key],
+          set: (v) => { c[key] = v; window.elementSdk.setConfig({ [key]: v }); }
+        });
+        return {
+          recolorables: [
+            makeColor('background_color'),
+            makeColor('surface_color'),
+            makeColor('text_color'),
+            makeColor('primary_action_color'),
+            makeColor('secondary_action_color')
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => c.font_family || defaultConfig.font_family,
+            set: (v) => { c.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+          },
+          fontSizeable: {
+            get: () => c.font_size || defaultConfig.font_size,
+            set: (v) => { c.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+          }
+        };
+      },
+      mapToEditPanelValues: (config) => {
+        const c = { ...defaultConfig, ...config };
+        return new Map([
+          ['app_title', c.app_title || defaultConfig.app_title],
+          ['currency_symbol', c.currency_symbol || defaultConfig.currency_symbol]
+        ]);
+      }
+    });
+
+    // ========== Helpers ==========
+    function getConfig() {
+      return { ...defaultConfig, ...(window.elementSdk.config || {}) };
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const c = getConfig();
+      const bg = type === 'success' ? '#6ecb8a' : '#e87461';
+      const toast = document.createElement('div');
+      toast.className = 'toast rounded-xl px-4 py-2 text-sm font-medium shadow-lg mb-2';
+      toast.style.cssText = `background:${bg};color:#0f1117;`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function formatCurrency(amount) {
+      const c = getConfig();
+      const sym = c.currency_symbol || '$';
+      return `${sym}${Math.abs(amount).toFixed(2)}`;
+    }
+
+    // ========== Rendering ==========
+    function updateSummary() {
+      const income = allTransactions.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+      const expenses = allTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
+      const balance = income - expenses;
+
+      document.getElementById('total-income').textContent = formatCurrency(income);
+      document.getElementById('total-expenses').textContent = formatCurrency(expenses);
+
+      const balEl = document.getElementById('total-balance');
+      balEl.textContent = (balance < 0 ? '-' : '') + formatCurrency(balance);
+      balEl.style.color = balance >= 0 ? getConfig().text_color : '#e87461';
+
+      // Balance bar
+      const total = income + expenses;
+      const pct = total === 0 ? 50 : (income / total) * 100;
+      document.getElementById('balance-bar').style.width = `${pct}%`;
+    }
+
+    function renderTransactions() {
+      const c = getConfig();
+      const list = document.getElementById('transaction-list');
+      const empty = document.getElementById('empty-state');
+      const filtered = currentFilter === 'all' ? allTransactions : allTransactions.filter(t => t.type === currentFilter);
+
+      // Sort by date descending
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      empty.classList.toggle('hidden', filtered.length > 0);
+
+      const existingMap = new Map();
+      [...list.children].forEach(el => existingMap.set(el.dataset.id, el));
+
+      const newIds = new Set(filtered.map(t => t.__backendId));
+
+      // Remove items no longer present
+      existingMap.forEach((el, id) => {
+        if (!newIds.has(id)) el.remove();
+      });
+
+      filtered.forEach((tx, i) => {
+        const id = tx.__backendId;
+        let el = list.querySelector(`[data-id="${id}"]`);
+        const isIncome = tx.type === 'income';
+        const icon = categoryIcons[tx.category] || 'circle';
+        const amtColor = isIncome ? '#6ecb8a' : '#e87461';
+        const sign = isIncome ? '+' : '-';
+        const dateStr = tx.date ? new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+        const isDeleting = pendingDeleteId === id;
+
+        if (!el) {
+          el = document.createElement('div');
+          el.dataset.id = id;
+          el.className = 'slide-in flex items-center gap-3 rounded-xl px-4 py-3 transition-all group';
+          list.appendChild(el);
+        }
+
+        el.style.backgroundColor = c.surface_color;
+        el.style.border = '1px solid rgba(232,224,212,0.05)';
+
+        if (isDeleting) {
+          el.innerHTML = `
+            <p class="flex-1 text-sm font-medium" style="color:${c.text_color};">Delete this transaction?</p>
+            <button onclick="confirmDelete('${id}')" class="rounded-lg px-3 py-1 text-xs font-semibold mr-1" style="background:#e87461;color:#0f1117;">Delete</button>
+            <button onclick="cancelDelete()" class="rounded-lg px-3 py-1 text-xs font-semibold" style="background:${c.surface_color};color:${c.secondary_action_color};border:1px solid rgba(232,224,212,0.1);">Cancel</button>
+          `;
+        } else {
+          el.innerHTML = `
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color:${c.background_color};">
+              <i data-lucide="${icon}" style="width:16px;height:16px;color:${c.primary_action_color};"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate" style="color:${c.text_color};">${tx.description || 'Untitled'}</p>
+              <p class="text-xs opacity-60" style="color:${c.secondary_action_color};">${tx.category || ''} · ${dateStr}</p>
+            </div>
+            <div class="text-right flex items-center gap-2">
+              <span class="text-sm font-bold" style="color:${amtColor};">${sign}${formatCurrency(tx.amount)}</span>
+              <button onclick="requestDelete('${id}')" class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-black/20" aria-label="Delete transaction">
+                <i data-lucide="trash-2" style="width:14px;height:14px;color:${c.secondary_action_color};"></i>
+              </button>
+            </div>
+          `;
+        }
+      });
+
+      updateSummary();
+      lucide.createIcons();
+    }
+
+    // ========== Delete Flow ==========
+    function requestDelete(id) {
+      pendingDeleteId = id;
+      renderTransactions();
+    }
+
+    function cancelDelete() {
+      pendingDeleteId = null;
+      renderTransactions();
+    }
+
+    async function confirmDelete(id) {
+      const tx = allTransactions.find(t => t.__backendId === id);
+      if (!tx) return;
+
+      const btn = event.target;
+      btn.textContent = '...';
+      btn.disabled = true;
+
+      const result = await window.dataSdk.delete(tx);
+      pendingDeleteId = null;
+      if (result.isOk) {
+        showToast('Transaction deleted');
+      } else {
+        showToast('Failed to delete', 'error');
+        renderTransactions();
+      }
+    }
+
+    // ========== Filters ==========
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.dataset.filter;
+        const c = getConfig();
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          const isActive = b === btn;
+          b.classList.toggle('active-filter', isActive);
+          b.style.backgroundColor = isActive ? c.primary_action_color : c.surface_color;
+          b.style.color = isActive ? c.background_color : c.secondary_action_color;
+        });
+        renderTransactions();
+      });
+    });
+
+    // ========== Form ==========
+    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (allTransactions.length >= 999) {
+        document.getElementById('limit-warning').classList.remove('hidden');
+        return;
+      }
+
+      const desc = document.getElementById('tx-desc');
+      const amt = document.getElementById('tx-amount');
+      const type = document.getElementById('tx-type');
+      const cat = document.getElementById('tx-category');
+      const btn = document.getElementById('submit-btn');
+
+      btn.disabled = true;
+      btn.querySelector('span').textContent = 'Adding...';
+
+      const result = await window.dataSdk.create({
+        description: desc.value.trim(),
+        amount: parseFloat(amt.value),
+        type: type.value,
+        category: cat.value,
+        date: new Date().toISOString()
+      });
+
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Add Transaction';
+
+      if (result.isOk) {
+        desc.value = '';
+        amt.value = '';
+        showToast('Transaction added!');
+      } else {
+        showToast('Failed to add transaction', 'error');
+      }
+    });
+
+    // ========== Data SDK ==========
+    const dataHandler = {
+      onDataChanged(data) {
+        allTransactions = data;
+        document.getElementById('limit-warning').classList.toggle('hidden', data.length < 999);
+        renderTransactions();
+      }
+    };
+
+    (async () => {
+      const initResult = await window.dataSdk.init(dataHandler);
+      if (!initResult.isOk) {
+        showToast('Failed to load data', 'error');
+      }
+    })();
+
+    // Initialize icons
+    lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dbcd1e4c7404b2d',t:'MTc3MzQyMzU4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
